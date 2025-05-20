@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import GraphView from "./GraphView";
 import Profile from "./Profile";
 import { Typography } from "@mui/material";
- import { Box } from "@mui/material";
-import { Grid } from '@mui/material'
-
+import { Box } from "@mui/material";
+import { Grid } from "@mui/material";
 
 // const response = [
 
@@ -60,32 +59,104 @@ import { Grid } from '@mui/material'
 // ];
 
 function App() {
-  const [ data, setData ] = useState(null);
-  const [ isLoading, setIsLoading ] = useState(true);
-  
+  const data4 = {
+    nodes: [
+      { id: "music", type: "interest", val: 3 },
+      { id: "puzzles", type: "interest", val: 3 },
+      { id: "community engagement", type: "interest", val: 3 },
+      { id: "Emily", type: "person" },
+      { id: "Robbie", type: "person" },
+      { id: "David", type: "person" },
+      { id: "Gage", type: "person" },
+      { id: "Willem Helmet Pickleman", type: "person" },
+      { id: "Aneesh", type: "person" },
+      { id: "Huxley", type: "person" },
+      { id: "Rachel", type: "person" },
+      { id: "Adrien", type: "person" },
+      { id: "Raunak", type: "person" },
+    ],
+    links: [
+      { source: "Emily", target: "music" },
+      { source: "Emily", target: "puzzles" },
+      { source: "David", target: "puzzles" },
+      { source: "Robbie", target: "music" },
+      { source: "David", target: "music" },
+      { source: "Gage", target: "music" },
+      { source: "Willem Helmet Pickleman", target: "music" },
+      { source: "Aneesh", target: "music" },
+
+      { source: "Emily", target: "community engagement" },
+      { source: "David", target: "community engagement" },
+      { source: "Huxley", target: "community engagement" },
+      { source: "Rachel", target: "community engagement" },
+      { source: "Adrien", target: "community engagement" },
+      { source: "Raunak", target: "community engagement" },
+    ],
+  };
+  const initialGraphData = data4;
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [graphData, setGraphData] = useState(initialGraphData);
+  const handleNodeClick = async (node) => {
+    const { id, type } = node;
+    console.log("handleNodeClick");
+    if (type === "person") {
+      const response = await fetch(
+        `http://127.0.0.1:8000/person/${id}/interests`
+      );
+      const response_json = await response.json();
+      const interests = response_json["data"]["interests"];
+      console.log("response_json['data']", response_json["data"]);
+      console.log("interests", interests);
+      console.log(graphData);
+
+      // {'id': 'music', 'type': 'interest', val: 3}
+      const newNodes = interests.map((interest) => {
+        console.log(interest);
+        return {
+          id: interest,
+          type: "interest",
+          val: 2,
+        };
+      });
+
+      const newLinks = interests.map((interest) => ({
+        source: id,
+        target: interest,
+      }));
+
+      console.log("newNodes", newNodes);
+      setGraphData((prev) => ({
+        links: [...prev.links, ...newLinks],
+        nodes: [...prev.nodes, ...newNodes],
+      }));
+    } else {
+    }
+  };
+
+  useEffect(() => {}, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/profiles');
+        const response = await fetch("http://127.0.0.1:8000/profiles");
         const response_json = await response.json();
-        console.log(response_json)
-        setData(response_json['data'])
-        console.log('setting data...')
+        response_json["data"].sort((a, b) => a.name.localeCompare(b.name));
+        setData(response_json["data"]);
       } catch (e) {
-        console.log(e)
-
+        console.log(e);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     };
-    fetchData()
+    fetchData();
+  }, []);
 
-  } , [])
-
+  console.log(graphData);
   return (
     <div className="App">
-      {/* <GraphView /> */}
-      <Box sx={{ flexGrow: 2 }}>
+      <GraphView onNodeClick={handleNodeClick} graphData={graphData} />
+      {/* <Box sx={{ flexGrow: 2 }}>
         <Typography variant="h2">BatchMates</Typography>
         {isLoading ? (
           <Typography>Data loading...</Typography>
@@ -100,7 +171,7 @@ function App() {
           ))}
           </Grid>
         )}
-      </Box>
+      </Box> */}
     </div>
   );
 }
