@@ -15,6 +15,7 @@
     "aframe-extras": "^7.5.4",
     "react-dom": "^19.1.0",
     "react-force-graph": "^1.47.6",
+    "react-router-dom": "^7.6.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },

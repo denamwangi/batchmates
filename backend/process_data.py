@@ -69,7 +69,7 @@ def call_llm(intro, prompt):
         }]
     )
     content = response.choices[0].message.content
-    print(content)
+    # print(content)
     return content
     
 
@@ -84,7 +84,8 @@ def get_llm_structured_output():
             save_intro_json(structured_output_json.get('name', f'nameless_{id}'), structured_output_json)
             # import pdb; pdb.set_trace()
 
-fields =['other','non_technical_hobbies_and_interest', 'role_and_institution', 'technical_skills_and_interests','goals','location']
+fields =['non_technical_hobbies_and_interest', 'technical_skills_and_interests']
+# fields =['other','non_technical_hobbies_and_interest', 'role_and_institution', 'technical_skills_and_interests','goals','location']
 def combine_all_interests():
     interests = set()
     with open(INTROS_JSON_FILE_NAME, 'r') as f:
@@ -104,9 +105,9 @@ def get_llm_condensed_output():
     print(response)
     response_json = json.loads(response)
 
-    with open('condensed_list.json', 'w') as f:
+    with open('condensed_list3.json', 'w') as f:
         json.dump(response_json, f, indent=2)
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
 
 fields =['other','non_technical_hobbies_and_interest', 'role_and_institution', 'technical_skills_and_interests','goals']
@@ -196,4 +197,5 @@ if __name__ == "__main__":
     # save_intro_json('Robbie',intro_data )
     # get_llm_structured_output()
     # get_llm_condensed_output()
-    build_nodes()
+    # build_nodes()
+    get_llm_condensed_output()

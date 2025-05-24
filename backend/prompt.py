@@ -30,10 +30,11 @@ Your job is to normalize and group similar items under standardized tags.
 
 Given a set of items with technical skills, goals, and non-technical hobbies, do the following:
 
-1. Create a set of **standardized tags** (max 40-45).
+1. Create a set of **standardized tags** (max 45-50).
    - Tags should be lowercase, simple phrases.
    - Merge overlapping concepts (e.g., “graphics programming” + “ray tracing” → “game development” or “computer graphics”)
-   - Keep tags high-level but meaningful.
+   - Keep tags high-level but meaningful **except** for rust, and emulators which you should keep specific.
+   - Pay attention to what is popular to determine how how level your tags should be
 
 2. Create a mapping from **each original item → its standardized tag**.
    - Do not lose any original items.
@@ -49,6 +50,7 @@ Return two JSON objects with no mardown following the format below exactly:
     "language design",
     "knitting",
     "martial arts",
+    "rust",
     ...
   ],
   "mappings": {

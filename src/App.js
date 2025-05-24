@@ -1,178 +1,186 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import GraphView from "./GraphView";
-import Profile from "./Profile";
-import { Typography } from "@mui/material";
-import { Box } from "@mui/material";
-import { Grid } from "@mui/material";
+import CardView from "./CardView";
+import { Route, Routes } from 'react-router-dom';
 
-// const response = [
 
-//     {
-//       "name": "Emily",
-//       "role_and_institution": "Technical Facilitator at Recurse Center",
-//       "technical_skills_and_interests": [
-//         "Cryptography",
-//         "Word games",
-//         "Puzzles"
-//       ],
-//       "goals": [
-//         "Run the retreat",
-//         "Support participants' technical growth"
-//       ],
-//       "location": "",
-//       "non_technical_hobbies_and_interest": [
-//         "Singing",
-//         "Music theatre"
-//       ],
-//       "other": [
-//         "Former engineering manager",
-//         "Alum (Winter 2 batch)",
-//         "Organizer of the RC Crosswording Conclave",
-//         "Available for chats via Calendly and Zulip"
-//       ]
-//     },
-//     {
-//       "name": "Mike",
-//       "role_and_institution": "Former Tech Recruiter and Manager (Etsy, Blue Apron, Datadog), current Recurse Center participant transitioning to SWE",
-//       "technical_skills_and_interests": [
-//         "coding",
-//         "software engineering",
-//         "deep dives into new technical topics"
-//       ],
-//       "goals": [
-//         "Go deep on and build around a few topics of interest",
-//         "Surround myself with more experienced peers to learn and collaborate"
-//       ],
-//       "location": "Brooklyn (Red Hook), New York",
-//       "non_technical_hobbies_and_interest": [
-//         "weightlifting and fitness",
-//         "cooking for family",
-//         "playing with daughter and exploring city (zoos, aquariums, museums, galleries, parks)",
-//         "playing guitar/music",
-//         "reading (Warhammer 40k lore)"
-//       ],
-//       "other": [
-//         "Grew up in South Africa, China, and Jordan",
-//         "Transitioning career from recruiting into software development"
-//       ]
-//     }
-// ];
-
+const API_BASE_URL = "http://127.0.0.1:8080"
 function App() {
-  const data4 = {
-    nodes: [
-      { id: "music", type: "interest", val: 3 },
-      { id: "puzzles", type: "interest", val: 3 },
-      { id: "community engagement", type: "interest", val: 3 },
-      { id: "Emily", type: "person" },
-      { id: "Robbie", type: "person" },
-      { id: "David", type: "person" },
-      { id: "Gage", type: "person" },
-      { id: "Willem Helmet Pickleman", type: "person" },
-      { id: "Aneesh", type: "person" },
-      { id: "Huxley", type: "person" },
-      { id: "Rachel", type: "person" },
-      { id: "Adrien", type: "person" },
-      { id: "Raunak", type: "person" },
-    ],
-    links: [
-      { source: "Emily", target: "music" },
-      { source: "Emily", target: "puzzles" },
-      { source: "David", target: "puzzles" },
-      { source: "Robbie", target: "music" },
-      { source: "David", target: "music" },
-      { source: "Gage", target: "music" },
-      { source: "Willem Helmet Pickleman", target: "music" },
-      { source: "Aneesh", target: "music" },
-
-      { source: "Emily", target: "community engagement" },
-      { source: "David", target: "community engagement" },
-      { source: "Huxley", target: "community engagement" },
-      { source: "Rachel", target: "community engagement" },
-      { source: "Adrien", target: "community engagement" },
-      { source: "Raunak", target: "community engagement" },
-    ],
-  };
-  const initialGraphData = data4;
+  const initialGraphData = {
+    nodes: [],
+    links: [],
+  }
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [graphData, setGraphData] = useState(initialGraphData);
+  const [peopleInNodes, setPeopleInNodes] = useState(new Set([]))
+  const [interestsInNodes, setInterestsInNodes] = useState(new Set([]))
+  const location = useLocation()
+
+  const fetchCardViewData = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/profiles`);
+      const response_json = await response.json();
+      response_json["data"].sort((a, b) => a.name.localeCompare(b.name));
+      setData(response_json["data"]);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const addInterestNode = (interest) => {
+    const newNode = [{
+      id: interest,
+      type: "interest",
+      val: 2,
+    }];
+  
+    setGraphData((prev) => ({
+      links: [...prev.links],
+      nodes: [...prev.nodes, ...newNode],
+    }));
+    setInterestsInNodes(new Set([...interestsInNodes, interest]))
+
+  }
+
+  const addPersonNode = (person) => {
+    const newNode = [{
+      id: person,
+      type: "person"
+    }];
+  
+    setGraphData((prev) => ({
+      links: [...prev.links],
+      nodes: [...prev.nodes, ...newNode],
+    }));
+    setPeopleInNodes(new Set([...peopleInNodes, person]))
+
+  }
+
+useEffect(() => {
+  const searchParams = new URLSearchParams(location.search);
+
+  const interest = searchParams.get('interest');
+  const person = searchParams.get('person');
+  if (interest) {
+    const lowerInterest = interest.toLowerCase()
+    addInterestNode(lowerInterest)
+    fetchPeopleWithInterest(lowerInterest)
+    setIsLoading(false)
+  } else if (person) {
+    addPersonNode(person)
+    fetchPersonInterest(person)
+    setIsLoading(false)
+  } else {
+    fetchCardViewData()
+  }
+
+}, [location])
+
+  
+  const fetchPersonInterest = async (id) => {
+    const response = await fetch(
+      `${API_BASE_URL}/person/${id}/interests`
+    );
+    const response_json = await response.json();
+    const interests = response_json["data"]["interests"];
+
+
+    // check if interest exists in nodes already
+    const dedupedInterests = [...new Set(interests)];
+    console.log('Deduped interests: ', dedupedInterests)
+    const newInterests = dedupedInterests.filter(interest => !interestsInNodes.has(interest));
+    console.log('interestsInNodes', interestsInNodes)
+    console.log('newInterests', newInterests)
+    setInterestsInNodes(new Set([...interestsInNodes, ...newInterests]))
+
+    // {'id': 'music', 'type': 'interest', val: 3}
+    const newNodes = newInterests.map((interest) => {
+      console.log('adding interest: ',interest);
+      return {
+        id: interest,
+        type: "interest",
+        val: 2,
+      };
+    });
+
+    const newLinks = dedupedInterests.map((interest) => ({
+      source: id,
+      target: interest,
+    }));
+
+    console.log("newNodes", newNodes);
+    setGraphData((prev) => ({
+      links: [...prev.links, ...newLinks],
+      nodes: [...prev.nodes, ...newNodes],
+    }));
+  };
+
+
+  const fetchPeopleWithInterest = async (interest) => {
+
+    const response = await fetch(
+      `${API_BASE_URL}/interest/${interest}/people`
+    );
+    const response_json = await response.json();
+    const people = response_json["data"]["people"];
+    console.log("people", people);
+    const dedupedPeople = [...new Set(people)];
+    const newPeople = dedupedPeople.filter(person => !peopleInNodes.has(person));
+    console.log('newPeople:', newPeople)
+    console.log('peopleInNodes:', peopleInNodes)
+    setPeopleInNodes(new Set([...peopleInNodes, ...newPeople]))
+
+    // {'id': 'music', 'type': 'interest', val: 3}
+    const newNodes = newPeople.map((person) => {
+      console.log('adding: ', person);
+      return {
+        id: person,
+        type: "person",
+      };
+    });
+
+    const newLinks = people.map((person) => ({
+      source: person,
+      target: interest,
+    }));
+
+    setGraphData((prev) => ({
+      links: [...prev.links, ...newLinks],
+      nodes: [...prev.nodes, ...newNodes],
+    }));
+  }
+  
   const handleNodeClick = async (node) => {
     const { id, type } = node;
-    console.log("handleNodeClick");
+    console.log("handleNodeClick", id, type);
     if (type === "person") {
-      const response = await fetch(
-        `http://127.0.0.1:8000/person/${id}/interests`
-      );
-      const response_json = await response.json();
-      const interests = response_json["data"]["interests"];
-      console.log("response_json['data']", response_json["data"]);
-      console.log("interests", interests);
-      console.log(graphData);
-
-      // {'id': 'music', 'type': 'interest', val: 3}
-      const newNodes = interests.map((interest) => {
-        console.log(interest);
-        return {
-          id: interest,
-          type: "interest",
-          val: 2,
-        };
-      });
-
-      const newLinks = interests.map((interest) => ({
-        source: id,
-        target: interest,
-      }));
-
-      console.log("newNodes", newNodes);
-      setGraphData((prev) => ({
-        links: [...prev.links, ...newLinks],
-        nodes: [...prev.nodes, ...newNodes],
-      }));
+      fetchPersonInterest(id)
     } else {
+      fetchPeopleWithInterest(id)
     }
   };
 
-  useEffect(() => {}, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/profiles");
-        const response_json = await response.json();
-        response_json["data"].sort((a, b) => a.name.localeCompare(b.name));
-        setData(response_json["data"]);
-      } catch (e) {
-        console.log(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  console.log(graphData);
   return (
-    <div className="App">
-      <GraphView onNodeClick={handleNodeClick} graphData={graphData} />
-      {/* <Box sx={{ flexGrow: 2 }}>
-        <Typography variant="h2">BatchMates</Typography>
-        {isLoading ? (
-          <Typography>Data loading...</Typography>
-        ) : (
-          
-          <Grid container spacing={4}>
-
-          {data.map((profileData) => (
-            <Grid size={4}>
-              <Profile data={profileData} />
-            </Grid>
-          ))}
-          </Grid>
-        )}
-      </Box> */}
-    </div>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <CardView
+              isLoading={isLoading}
+              data={data}
+            />
+          }
+        />
+        <Route
+          path="/graph"
+          element={
+            <GraphView onNodeClick={handleNodeClick} graphData={graphData} isLoading={isLoading} />
+          }
+        />
+      </Routes>
   );
 }
 

@@ -61,51 +61,49 @@ const data2 = {
 
 
 export default function GraphView(props) {
-    const { onNodeClick, graphData } = props;
-
+    const { onNodeClick, graphData, isLoading } = props;
+  console.log('isLoading', isLoading)
 
     return (
+      isLoading ? (
+        "Loading..."
+      ) : (
         <ForceGraph2D
-            onNodeClick={onNodeClick}
+        onNodeClick={onNodeClick}
 
-            graphData={graphData}
-            nodeCanvasObject={(node, ctx, globalScale) => {
+        graphData={graphData}
+        nodeCanvasObject={(node, ctx, globalScale) => {
 
-                const radius = 6 * (node.val || 1);
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, false);
-                ctx.fillStyle = node.color || 'orange';
-                ctx.fill();
-                ctx.strokeStyle = 'gray';
-                ctx.stroke();
+            const radius = 6 * (node.val || 1);
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, false);
+            ctx.fillStyle = node.color || 'orange';
+            ctx.fill();
+            ctx.strokeStyle = 'gray';
+            ctx.stroke();
 
-                const label = node.id; // or any other property
-                const fontSize = 12 / globalScale;
-                ctx.font = `${fontSize}px Sans-Serif`;
-                ctx.fillStyle = 'black';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(label, node.x, node.y);
-                
-              }}
-              nodePointerAreaPaint={(node, color, ctx) => {
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, 5, 0, 2 * Math.PI, false);
-                ctx.fill();
-              }}
-              nodeLabel="id"
-              linkLabel="label"
-              nodeRelSize={6}
-              nodeAutoColorBy="id"
-        
-        />
+            const label = node.id; // or any other property
+            const fontSize = 12 / globalScale;
+            ctx.font = `${fontSize}px Sans-Serif`;
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, node.x, node.y);
+            
+          }}
+          nodePointerAreaPaint={(node, color, ctx) => {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 5, 0, 2 * Math.PI, false);
+            ctx.fill();
+          }}
+          nodeLabel="id"
+          linkLabel="label"
+          nodeRelSize={6}
+          nodeAutoColorBy="id"
+    
+    />
+      )
+
     );
 }
-
-// {'source': 'Emily', 'target': 'community engagement'}, 
-// {'source': 'David', 'target': 'community engagement'}, 
-// {'source': 'Huxley', 'target': 'community engagement'}, 
-// {'source': 'Rachel', 'target': 'community engagement'}, 
-// {'source': 'Adrien', 'target': 'community engagement'}, 
-// {'source': 'Raunak', 'target': 'community engagement'}, 

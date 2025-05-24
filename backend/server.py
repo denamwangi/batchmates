@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import json 
 import os
+from batchmates_agent.agent_runner import run_team_conversation
+import asyncio
 
 app = FastAPI()
 
@@ -11,6 +13,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+with open('./condensed_list3.json', 'r') as f:
+    data = json.load(f)
+    normalized_mapping = data.get('mapping')
 
 @app.get("/")
 def say_hello():
@@ -23,29 +29,26 @@ def get_profiles():
     full_path = os.path.join(folder_path, INTROS_JSON_FILE_NAME+'.json')
     with open(full_path, 'r') as f:
         intros = json.load(f)
-        data = [v for k, v in intros.items()]
-        print('****', data)
+        data = [v for _, v in intros.items()]
     return {'status': 200, 'data': data}
 
 @app.get("/person/{person}/interests")
 def get_interests(person: str):
-    print(f"\n getting interest for {person} \n")
-    folder_path = os.path.abspath(os.getcwd())
-    INTROS_JSON_FILE_NAME = 'zulip_intros_json'
-    full_path = os.path.join(folder_path, INTROS_JSON_FILE_NAME+'.json')
-    with open(full_path, 'r') as f:
-        intros = json.load(f)
-        interests = next((v.get('technical_skills_and_interests') for k, v in intros.items() if k.lower() == person.lower()), [])
-        print('****', interests)
+    agent_response = asyncio.run(run_team_conversation(f"What is {person} interested in?"))
+    interests = json.loads(agent_response)
     return {'status': 200, 'data': {'id': person, 'interests': interests}}
 
 @app.get("/interest/{interest}/people")
-def get_people_with_interest():
-    folder_path = os.path.abspath(os.getcwd())
-    INTROS_JSON_FILE_NAME = 'zulip_intros_json'
-    full_path = os.path.join(folder_path, INTROS_JSON_FILE_NAME+'.json')
-    with open(full_path, 'r') as f:
-        intros = json.load(f)
-        data = [v for k, v in intros.items()]
-        print('****', data)
-    return {'status': 200, 'data': data}
+def get_people_with_interest(interest):
+    agent_response = None
+    try:
+        agent_response = asyncio.run(run_team_conversation(f"Who are all the people interested in {interest.lower()}?"))
+    except:
+        pass
+
+    if isinstance(agent_response, str):
+        people = json.loads(agent_response)
+    else:
+        people = agent_response
+
+    return {'status': 200, 'data': {'id': interest, 'people': people}}
