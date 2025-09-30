@@ -1,9 +1,10 @@
 from sqlalchemy import Column, String, Integer, create_engine, ForeignKey, inspect
 from sqlalchemy.orm import declarative_base, Session, relationship
 import json 
+import os
 
 engine = create_engine(
-    "postgresql+psycopg2://denamwangi:mcppassword@localhost:5432/rcdb"
+    os.getenv('MCP_URL')
 )
 inspector = inspect(engine)
 session = Session(engine)

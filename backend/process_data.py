@@ -15,11 +15,8 @@ zulip_client = zulip.Client(api_key=ZULIP_SECRET, email='dena.mwangi@gmail.com',
 openai_client = OpenAI()
 MODEL = 'o4-mini-2025-04-16'
 
-
-
 def get_zulip_data():
     # subscriptions = zulip_client.get_subscriptions()
-
     request = {
         "anchor": "newest",
         "num_before": 100,
@@ -31,6 +28,7 @@ def get_zulip_data():
     }
     result = zulip_client.get_messages(request)
     return result
+
 
 def save_zulip_data(data):
     with open(INTROS_CSV_FILE_NAME, 'w', newline="") as file:
@@ -171,22 +169,6 @@ def build_nodes():
     print(links, len(links))
 
 
-intro_data = {
-    "name": "Robbie",
-    "role": "Assistant Professor",
-    "institution": "Rutgers–Newark",
-    "technical_skills": ["Rust", "Lua", "Zig"],
-    "creative_interests": ["music"],
-    "learning_interests": ["Japanese"],
-    "projects": [
-        { "title": "hither", "description": "forth-like toy language" },
-        { "title": "form-of-danger", "description": "game jam game" },
-        { "title": "seamstress", "description": "Lua environment" }
-    ],
-    "location": "Brooklyn",
-    "open_to_collab": "yes",
-    "other": ["comp sci prof", "math background"]
-}
 
 if __name__ == "__main__":
     data = get_zulip_data()
@@ -194,7 +176,6 @@ if __name__ == "__main__":
     # import pdb; pdb.set_trace()
     # save_zulip_data(messages)
     
-    # save_intro_json('Robbie',intro_data )
     # get_llm_structured_output()
     # get_llm_condensed_output()
     # build_nodes()

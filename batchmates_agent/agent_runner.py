@@ -19,7 +19,7 @@ os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"
 
 model = MODEL_GPT_40
 cheap_model = MODEL_GPT_40
-postgres_url = "postgresql://denamwangi:mypassword@localhost:5432/rcdb"
+postgres_url = os.getenv('DB_URL')
 
 
 def get_prompt():
@@ -61,11 +61,9 @@ async def run_team_conversation(prompt):
     await session_service.create_session(
         app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
     )
-
     runner_agent_team = Runner(
         agent=root_agent, app_name=APP_NAME, session_service=session_service
     )
-
     final_response_text = await call_agent_async(
         prompt, runner=runner_agent_team, user_id=USER_ID, session_id=SESSION_ID
     )

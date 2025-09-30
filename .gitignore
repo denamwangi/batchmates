@@ -6,3 +6,6 @@ backend/__pycache__/*
 venv-py310/
 dump.sql
 build
+interest_mappings.json
+raw_introductions.csv
+zulip_intros_json.json
