@@ -8,7 +8,7 @@ import random
 
 
 ZULIP_SECRET = os.environ.get('ZULIP_SECRET')
-INTROS_CSV_FILE_NAME = 'zulip_intros2.csv'
+INTROS_CSV_FILE_NAME = 'raw_introductions.csv'
 INTROS_JSON_FILE_NAME = 'zulip_intros_json.json'
 CONDENSED_LIST_FILE_NAME = 'condensed_list.json'
 zulip_client = zulip.Client(api_key=ZULIP_SECRET, email='dena.mwangi@gmail.com', site='https://recurse.zulipchat.com')
@@ -105,7 +105,7 @@ def get_llm_condensed_output():
     print(response)
     response_json = json.loads(response)
 
-    with open('condensed_list3.json', 'w') as f:
+    with open('interest_mappings.json', 'w') as f:
         json.dump(response_json, f, indent=2)
     # import pdb; pdb.set_trace()
 
@@ -189,7 +189,7 @@ intro_data = {
 }
 
 if __name__ == "__main__":
-    # data = get_zulip_data()
+    data = get_zulip_data()
     # messages = data['messages']
     # import pdb; pdb.set_trace()
     # save_zulip_data(messages)
@@ -198,4 +198,4 @@ if __name__ == "__main__":
     # get_llm_structured_output()
     # get_llm_condensed_output()
     # build_nodes()
-    get_llm_condensed_output()
+    # get_llm_condensed_output()

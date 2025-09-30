@@ -14,7 +14,7 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-with open('./condensed_list3.json', 'r') as f:
+with open('./interest_mappings.json', 'r') as f:
     data = json.load(f)
     normalized_mapping = data.get('mapping')
 

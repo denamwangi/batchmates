@@ -75,7 +75,7 @@ def add_interest_types():
 
 def add_normalized_interests(normalized_interests):
     normalized_interests_to_db = []
-    # with open('condensed_list3.json', 'r') as f:
+    # with open('interest_mappings.json', 'r') as f:
     #     data = json.load(f)
     #     normalized_interests = data['standardized_tags']
     #     normalized_interests_mappings = data['mappings']
@@ -212,7 +212,7 @@ def initialize_db():
 
     with open('zulip_intros_json.json', 'r') as f:
         intros = json.load(f)
-    with open('condensed_list3.json', 'r') as f:
+    with open('interest_mappings.json', 'r') as f:
         data = json.load(f)
         normalized_interests = data['standardized_tags']
         normalized_interests_mappings = data['mappings']
