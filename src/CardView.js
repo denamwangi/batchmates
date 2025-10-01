@@ -9,9 +9,9 @@ export default function CardView(props) {
       {isLoading ? (
         <Typography>Data loading...</Typography>
       ) : (
-        <Grid container spacing={4}>
-          {data.map((profileData) => (
-            <Grid size={4}>
+        <Grid container spacing={4} alignItems="stretch">
+          {data.map((profileData, idx) => (
+            <Grid key={idx} xs={12} sm={6} md={4} item>
               <Profile
                 data={profileData}
                 onProfileButtonClick={onProfileButtonClick}

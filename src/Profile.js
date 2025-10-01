@@ -28,8 +28,8 @@ export default function Profile(props) {
         borderRadius: 1,
       }}
     >
-      <Card>
-        <CardContent>
+      <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+        <CardContent sx={{ overflow: "auto", flexGrow: 1 }}>
           <Typography variant="h5">{name}</Typography>
           <Typography variant="body4">{role_and_institution}</Typography>
 
@@ -38,9 +38,9 @@ export default function Profile(props) {
 
           <Typography variant="h6">Interests:</Typography>
           {technical_skills_and_interests.map((interest, index) => (
-            <React.Fragment>
+            <React.Fragment key={`tech-${index}`}>
               {addLinkToInterest(interest)}
-              {index < interest.length - 1 && (
+              {index < technical_skills_and_interests.length - 1 && (
                 <Typography component="span">, </Typography>
               )}
             </React.Fragment>
@@ -49,9 +49,9 @@ export default function Profile(props) {
           <Typography variant="h6">Hobbies</Typography>
           <Typography variant="body3">
             {non_technical_hobbies_and_interest.map((interest, index) => (
-              <React.Fragment>
+              <React.Fragment key={`hobby-${index}`}>
                 {addLinkToInterest(interest)}
-                {index < interest.length - 1 && (
+                {index < non_technical_hobbies_and_interest.length - 1 && (
                   <Typography component="span">, </Typography>
                 )}
               </React.Fragment>
