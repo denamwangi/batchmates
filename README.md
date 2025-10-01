@@ -36,7 +36,7 @@ A web application that visualizes and explores connections between Recurse Cente
 batchmates/
 ├── backend/                 # FastAPI backend
 │   ├── server.py           # Main API server with endpoints
-│   ├── data.py             # SQLAlchemy models and database operations
+│   ├── db_init.py          # Database initialization and seeding operations
 │   ├── process_data.py     # Data processing and LLM integration
 │   └── prompt.py           # LLM prompts for data extraction
 ├── batchmates_agent/       # AI agent for database querying
@@ -99,7 +99,7 @@ The application uses a normalized database schema with the following key entitie
 
 4. Initialize the database:
    ```bash
-   python backend/data.py
+   python backend/db_init.py
    ```
 
 5. Start the FastAPI server:
