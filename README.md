@@ -26,9 +26,61 @@ A web application that visualizes and explores connections between Recurse Cente
 - **Zulip API** for data collection from Recurse Center introductions
 
 ### Data Processing
-- **LLM Summarization**: Extracts structured data from informal introductions
-- **Interest Normalization**: Groups similar interests into standardized categories
+- **LLM Summarization**: Extracts structured data from informal introductions using `prompts/intro_summarize.txt`
+- **Interest Normalization**: Groups similar interests into standardized categories using `prompts/intro_interests_normalize.txt`
 - **Relationship Mapping**: Creates connections between people based on shared interests
+- **Modular Prompts**: Text-based prompt templates for easy customization and version control
+
+## System Architecture
+
+```mermaid
+graph TB
+  Z[Zulip API] --> P[LLM Processing<br/>OpenAI GPT-4]
+  P --> DB[(PostgreSQL)]
+  P --> JSON[data/zulip_intros_json.json]
+
+  DB --> AGENT[AI Agent with MCP]
+  JSON --> API[FastAPI REST API]
+  API -.-> AGENT
+  
+  API --> REACT[React Frontend]
+  REACT --> CV[Card View]
+  REACT --> GV[Graph View]
+
+  %% Data flow arrows show progression from source to storage and interfaces
+```
+
+### Architecture Components
+
+**🔄 Data Flow:**
+1. **Collection**: Zulip API provides raw introduction messages
+2. **Processing**: LLM extracts structured data using modular prompts
+3. **Normalization**: Interests are categorized and standardized
+4. **Storage**: Data is stored in PostgreSQL with proper relationships
+5. **Visualization**: React frontend displays interactive network and profiles
+
+**🤖 AI Integration:**
+- **LLM Processing**: OpenAI GPT-4o-mini for data extraction and normalization
+- **Agent System**: Google ADK with MCP tools for intelligent database querying
+- **Prompt Management**: Text-based templates for easy customization
+ - **REST API Integration**: FastAPI can route certain queries through the LLM agent for natural-language powered results
+
+#### Agent Invocation and Postgres Access
+The Postgres server is accessed through the agent run flow. Calls like the following execute the ADK/MCP-backed agent, which queries Postgres using `DB_URL`:
+
+```python
+agent_response = asyncio.run(run_team_conversation("Who is interested in artificial intelligence?"))
+```
+
+**🌐 User Interfaces:**
+- **Web Application**: React-based UI for browsing profiles and network visualization
+- **ADK Interface**: Google ADK web UI for testing and interacting with the AI agent
+- **REST API**: FastAPI endpoints for frontend-backend communication
+
+**🗄️ Data Management:**
+- **Structured Storage**: PostgreSQL with SQLAlchemy ORM
+- **File Organization**: Centralized `data/` directory for generated files
+- **Schema Design**: Normalized database with proper relationships
 
 ## Project Structure
 
@@ -38,19 +90,29 @@ batchmates/
 │   ├── server.py           # Main API server with endpoints
 │   ├── db_init.py          # Database initialization and seeding operations
 │   ├── process_data.py     # Data processing and LLM integration
-│   └── prompt.py           # LLM prompts for data extraction
+│   └── models/             # Database models and schemas
+│       ├── orm.py          # SQLAlchemy ORM models
+│       └── schemas.py      # Pydantic schemas
 ├── batchmates_agent/       # AI agent for database querying
 │   ├── agent.py            # Google ADK agent configuration
 │   ├── agent_runner.py     # Agent execution and session management
 │   └── constants.py        # Agent configuration constants
+├── prompts/                # LLM prompt templates
+│   ├── intro_summarize.txt # Prompt for extracting structured data
+│   ├── intro_interests_normalize.txt # Prompt for interest normalization
+│   └── rcdb_agent_instructions.txt # Agent system instructions
+├── data/                   # Generated data files
+│   ├── raw_introductions.csv
+│   ├── zulip_intros_json.json
+│   ├── interest_mappings.json
+│   └── network_data.json
 ├── src/                    # React frontend
 │   ├── App.js              # Main app component with routing
 │   ├── CardView.js         # Profile cards view
 │   ├── GraphView.js        # Network graph visualization
 │   └── Profile.js          # Individual profile component
 ├── build/                  # Production build output
-├── public/                 # Static assets
-└── data files/             # JSON and CSV data files
+└── public/                 # Static assets
 ```
 
 ## API Endpoints
@@ -95,17 +157,24 @@ The application uses a normalized database schema with the following key entitie
    ```bash
    export ZULIP_SECRET="your_zulip_api_key"
    export DB_URL="postgresql://username:password@localhost:5432/rcdb"
+   export OPENAI_API_KEY="your_openai_api_key"  # For LLM processing
    ```
 
 4. Initialize the database:
    ```bash
-   python backend/db_init.py
+   python -m backend.db_init
    ```
 
 5. Start the FastAPI server:
    ```bash
    uvicorn backend.server:app --reload --port 8080
    ```
+
+6. Launch the Google ADK UI (optional):
+   ```bash
+   adk web
+   ```
+   This opens the Google ADK web interface for testing and interacting with the AI agent.
 
 ### Frontend Setup
 1. Install Node.js dependencies:
@@ -126,6 +195,7 @@ The application will be available at `http://localhost:3000` with the API runnin
 2. **Explore Graph**: Navigate to `/graph` to see the interactive network visualization
 3. **Discover Connections**: Click on any interest to see who shares it, or click on a person to see their interests
 4. **Deep Dive**: Use the AI agent to ask natural language questions about the data
+5. **Test AI Agent**: Run `adk web` to open the Google ADK UI for testing agent interactions
 
 ## Data Sources
 
@@ -135,15 +205,38 @@ The application processes data from:
 - Normalized interest categories
 - Relationship mappings between people and interests
 
+## Data Management
+
+The application organizes all generated data in the `data/` directory:
+
+- **Raw Data**: `raw_introductions.csv` - Original Zulip messages
+- **Structured Data**: `zulip_intros_json.json` - LLM-extracted profiles
+- **Normalized Data**: `interest_mappings.json` - Standardized interest categories
+- **Network Data**: `network_data.json` - Graph relationships for visualization
+
+All data files are automatically created and managed by the processing pipeline. The `data/` directory is created automatically if it doesn't exist.
+
+### Prompt Customization
+
+LLM prompts are stored as text files in the `prompts/` directory for easy editing:
+
+- `intro_summarize.txt` - Controls how introductions are structured
+- `intro_interests_normalize.txt` - Controls interest categorization logic
+- `rcdb_agent_instructions.txt` - Agent behavior and database query instructions
+
+Modify these files to adjust the LLM behavior without changing code.
+
 ## Development
 
 The project includes:
-- Comprehensive data processing pipeline
-- LLM integration for data extraction and normalization
-- Interactive visualization components
-- AI agent for intelligent database querying
-- RESTful API design
-- Modern React patterns with hooks and routing
+- **Modular Architecture**: Separated concerns with dedicated directories for prompts, data, and models
+- **Text-Based Prompts**: Easy-to-edit prompt templates for LLM customization
+- **Organized Data Management**: Centralized data directory with clear file purposes
+- **Comprehensive Data Processing Pipeline**: From raw Zulip data to interactive visualizations
+- **AI Agent Integration**: Google ADK with MCP tools for intelligent database querying
+- **RESTful API Design**: Clean endpoints for frontend integration
+- **Modern React Patterns**: Hooks, routing, and component-based architecture
+- **Database-First Approach**: SQLAlchemy ORM with proper schema management
 
 ## Contributing
 
