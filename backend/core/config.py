@@ -30,7 +30,7 @@ CORS_ORIGINS = os.environ.get(
 
 
 # File Paths
-DATA_DIR = "./"
+DATA_DIR = "./data"
 INTEREST_MAPPINGS_FILE = "interest_mappings.json"
 PROFILES_FILE = "zulip_intros_json.json"
 

@@ -38,7 +38,7 @@ app.add_middleware(
 
 # Simple error handling - just let FastAPI handle it with HTTPException
 
-with open('./interest_mappings.json', 'r') as f:
+with open('./data/interest_mappings.json', 'r') as f:
     data = json.load(f)
     normalized_mapping = data.get('mapping')
 
@@ -73,7 +73,7 @@ def get_profiles(
     """
     try:
         folder_path = os.path.abspath(os.getcwd())
-        full_path = os.path.join(folder_path, 'zulip_intros_json.json')
+        full_path = os.path.join(folder_path, 'data', 'zulip_intros_json.json')
         print('full_path', full_path)
         with open(full_path, 'r') as f:
             intros = json.load(f)
