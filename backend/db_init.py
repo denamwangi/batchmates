@@ -13,25 +13,29 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 import json 
 import os
-from backend.models.orm import Base, Person, Interest, NormalizedInterest, InterestType, PersonInterest
+from .models.orm import Base, Person, Interest, NormalizedInterest, InterestType, PersonInterest
 
-engine = create_engine(
-    os.getenv('MCP_URL')
-)
+db_url = os.getenv('DB_URL')
+if not db_url:
+    raise RuntimeError("DB_URL is not set. Export DB_URL or add it to your env before running.")
+
+engine = create_engine(db_url)
 inspector = inspect(engine)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 
-def create_tables():
-    """Create all database tables if they do not already exist.
-
-    Uses SQLAlchemy metadata from `Base` to create tables on the configured
-    engine. Safe to call multiple times.
-    """
-    if "interests" not in inspector.get_table_names():
-        Base.metadata.create_all(engine)
-    else:
-        print('Tables exist!')
+def create_tables() -> bool:
+    """Ensure all SQLAlchemy tables exist; return success boolean."""
+    if not os.getenv('DB_URL'):
+        print("❌ DB_URL is not set")
+        return False
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("✅ Tables ensured.")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to create tables: {e}")
+        return False
 
 interest_types = [ 'technical_skills_and_interests', 'non_technical_hobbies_and_interest']
 def add_interest_types():
@@ -217,9 +221,9 @@ def initialize_db():
     """
     create_tables()
 
-    with open('zulip_intros_json.json', 'r') as f:
+    with open('data/zulip_intros_json.json', 'r') as f:
         intros = json.load(f)
-    with open('interest_mappings.json', 'r') as f:
+    with open('data/interest_mappings.json', 'r') as f:
         data = json.load(f)
         normalized_interests = data['standardized_tags']
         normalized_interests_mappings = data['mappings']
@@ -232,9 +236,3 @@ def initialize_db():
 
 if __name__ == "__main__":
     initialize_db()
-    # for person in session.query(Person).limit(5):
-    #     print(f" {person.name} has these interests: ")
-    #     for pi in person.interests: print(f"....   {pi.interest.description}")
-        
-        
-

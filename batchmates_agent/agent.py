@@ -12,7 +12,7 @@ if not postgres_url:
 
 MODEL_GPT_40='openai/gpt-4o-mini'
 def get_prompt():
-    with open('./rcdb_agent_instructions.txt', 'r') as f:
+    with open('./prompts/rcdb_agent_instructions.txt', 'r') as f:
         prompt = f.read()
         print(prompt)
         return prompt

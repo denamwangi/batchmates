@@ -23,7 +23,7 @@ postgres_url = os.getenv('DB_URL')
 
 
 def get_prompt():
-    with open("./rcdb_agent_instructions.txt", "r") as f:
+    with open("./prompts/rcdb_agent_instructions.txt", "r") as f:
         prompt = f.read()
         return prompt
 

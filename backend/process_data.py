@@ -3,15 +3,19 @@ import os
 import csv
 import json
 from openai import OpenAI
-from prompt import summarize_prompt, condense_list_prompt
+with open('prompts/intro_summarize.txt', 'r') as _f:
+    summarize_prompt = _f.read()
+with open('prompts/intro_interests_normalize.txt', 'r') as _f:
+    condense_list_prompt = _f.read()
 import random
 
 # Configuration
 ZULIP_SECRET = os.environ.get('ZULIP_SECRET')
-INTROS_CSV_FILE_NAME = 'raw_introductions.csv'
-INTROS_JSON_FILE_NAME = 'zulip_intros_json.json'
-INTEREST_MAPPINGS_FILE = 'interest_mappings.json'
-NETWORK_DATA_FILE = 'network_data.json'
+DATA_DIR = 'data'
+INTROS_CSV_FILE_NAME = f'{DATA_DIR}/raw_introductions.csv'
+INTROS_JSON_FILE_NAME = f'{DATA_DIR}/zulip_intros_json.json'
+INTEREST_MAPPINGS_FILE = f'{DATA_DIR}/interest_mappings.json'
+NETWORK_DATA_FILE = f'{DATA_DIR}/network_data.json'
 MODEL = 'gpt-4o-mini'
 
 # Data processing fields
@@ -21,6 +25,9 @@ FIELDS = ['other', 'non_technical_hobbies_and_interest', 'role_and_institution',
 # Initialize clients
 zulip_client = zulip.Client(api_key=ZULIP_SECRET, email='dena.mwangi@gmail.com', site='https://recurse.zulipchat.com')
 openai_client = OpenAI()
+
+# Ensure data directory exists for outputs
+os.makedirs(DATA_DIR, exist_ok=True)
 
 def get_zulip_data():
     """
