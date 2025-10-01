@@ -37,10 +37,9 @@ A web application that visualizes and explores connections between Recurse Cente
 graph TB
   Z[Zulip API] --> P[LLM Processing<br/>OpenAI GPT-4]
   P --> DB[(PostgreSQL)]
-  P --> JSON[data/zulip_intros_json.json]
 
+  DB --> API[FastAPI REST API]
   DB --> AGENT[AI Agent with MCP]
-  JSON --> API[FastAPI REST API]
   API -.-> AGENT
   
   API --> REACT[React Frontend]
@@ -57,7 +56,8 @@ graph TB
 2. **Processing**: LLM extracts structured data using modular prompts
 3. **Normalization**: Interests are categorized and standardized
 4. **Storage**: Data is stored in PostgreSQL with proper relationships
-5. **Visualization**: React frontend displays interactive network and profiles
+5. **API Access**: FastAPI queries database directly for all data
+6. **Visualization**: React frontend displays interactive network and profiles
 
 **🤖 AI Integration:**
 - **LLM Processing**: OpenAI GPT-4o-mini for data extraction and normalization
@@ -78,8 +78,9 @@ agent_response = asyncio.run(run_team_conversation("Who is interested in artific
 - **REST API**: FastAPI endpoints for frontend-backend communication
 
 **🗄️ Data Management:**
-- **Structured Storage**: PostgreSQL with SQLAlchemy ORM
-- **File Organization**: Centralized `data/` directory for generated files
+- **Database-First Architecture**: PostgreSQL as single source of truth
+- **SQLAlchemy ORM**: Proper relationships and data integrity
+- **File Organization**: Centralized `data/` directory for processing artifacts
 - **Schema Design**: Normalized database with proper relationships
 
 ## Project Structure
@@ -90,6 +91,7 @@ batchmates/
 │   ├── server.py           # Main API server with endpoints
 │   ├── db_init.py          # Database initialization and seeding operations
 │   ├── process_data.py     # Data processing and LLM integration
+│   ├── database.py         # Database connection and session management
 │   └── models/             # Database models and schemas
 │       ├── orm.py          # SQLAlchemy ORM models
 │       └── schemas.py      # Pydantic schemas
@@ -207,14 +209,20 @@ The application processes data from:
 
 ## Data Management
 
-The application organizes all generated data in the `data/` directory:
+The application uses a **database-first architecture** with PostgreSQL as the single source of truth:
 
-- **Raw Data**: `raw_introductions.csv` - Original Zulip messages
-- **Structured Data**: `zulip_intros_json.json` - LLM-extracted profiles
-- **Normalized Data**: `interest_mappings.json` - Standardized interest categories
-- **Network Data**: `network_data.json` - Graph relationships for visualization
+- **Primary Storage**: PostgreSQL database with normalized schema
+- **Processing Artifacts**: `data/` directory contains intermediate files from the LLM processing pipeline
+- **API Access**: All endpoints query the database directly via SQLAlchemy ORM
+- **Data Integrity**: Proper relationships and constraints ensure data consistency
 
-All data files are automatically created and managed by the processing pipeline. The `data/` directory is created automatically if it doesn't exist.
+### Processing Pipeline Artifacts
+- **Raw Data**: `data/raw_introductions.csv` - Original Zulip messages
+- **Structured Data**: `data/zulip_intros_json.json` - LLM-extracted profiles (used for seeding)
+- **Normalized Data**: `data/interest_mappings.json` - Standardized interest categories (used for seeding)
+- **Network Data**: `data/network_data.json` - Graph relationships for visualization (used for seeding)
+
+The `data/` directory is created automatically during processing and contains files used to seed the database.
 
 ### Prompt Customization
 
@@ -229,14 +237,14 @@ Modify these files to adjust the LLM behavior without changing code.
 ## Development
 
 The project includes:
+- **Database-First Architecture**: PostgreSQL as single source of truth with SQLAlchemy ORM
 - **Modular Architecture**: Separated concerns with dedicated directories for prompts, data, and models
 - **Text-Based Prompts**: Easy-to-edit prompt templates for LLM customization
-- **Organized Data Management**: Centralized data directory with clear file purposes
 - **Comprehensive Data Processing Pipeline**: From raw Zulip data to interactive visualizations
 - **AI Agent Integration**: Google ADK with MCP tools for intelligent database querying
-- **RESTful API Design**: Clean endpoints for frontend integration
+- **RESTful API Design**: Clean endpoints with dependency injection and proper error handling
 - **Modern React Patterns**: Hooks, routing, and component-based architecture
-- **Database-First Approach**: SQLAlchemy ORM with proper schema management
+- **Data Integrity**: Normalized database schema with proper relationships and constraints
 
 ## Contributing
 

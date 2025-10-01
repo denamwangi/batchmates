@@ -9,7 +9,7 @@ This service exposes endpoints to:
 
 CORS origins are configured via settings in `backend.core.config`.
 """
-from fastapi import FastAPI, HTTPException, Query, Path
+from fastapi import FastAPI, HTTPException, Query, Path, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import json 
 import os
@@ -20,6 +20,9 @@ from backend.models.schemas import (
     ProfileResponse, ProfileModel, PersonInterestsResponse, InterestPeopleResponse,
     HealthCheckResponse
 )
+from backend.models.orm import Person, Interest, PersonInterest, InterestType
+from backend.database import get_db
+from sqlalchemy.orm import Session
 
 app = FastAPI(
     title="BatchMates API",
@@ -38,10 +41,6 @@ app.add_middleware(
 
 # Simple error handling - just let FastAPI handle it with HTTPException
 
-with open('./data/interest_mappings.json', 'r') as f:
-    data = json.load(f)
-    normalized_mapping = data.get('mapping')
-
 @app.get("/", response_model=HealthCheckResponse)
 def health_check():
     """Health check endpoint.
@@ -59,54 +58,68 @@ def health_check():
 
 @app.get("/profiles", response_model=ProfileResponse)
 def get_profiles(
-    limit: int = Query(default=50, ge=1, le=100, description="Maximum number of profiles to return")
+    limit: int = Query(default=50, ge=1, le=100, description="Maximum number of profiles to return"),
+    db: Session = Depends(get_db)
 ):
     """Get all batchmate profiles.
 
-    Reads profiles from `zulip_intros_json.json` in the current working
-    directory, coerces each record into a `ProfileModel`, and returns up to
-    `limit` items.
+    Queries the database for all people and their associated interests,
+    organizing them by interest type (technical, goals, hobbies, other).
 
     Raises:
-        HTTPException 404: If the profiles file is not found.
-        HTTPException 500: If the JSON is invalid or coercion fails.
+        HTTPException 500: If database query fails.
     """
     try:
-        folder_path = os.path.abspath(os.getcwd())
-        full_path = os.path.join(folder_path, 'data', 'zulip_intros_json.json')
-        print('full_path', full_path)
-        with open(full_path, 'r') as f:
-            intros = json.load(f)
-
+        # Query all people with their interests
+        people = db.query(Person).limit(limit).all()
+        
         profiles = []
-        for key, v in intros.items():
-            raw_name = v.get('name') or ""
-            safe_name = raw_name.strip()
-            if not safe_name:
-                safe_name = (key or "").strip() or "Unknown"
-            payload = {
-                'name': safe_name,
-                'role_and_institution': v.get('role_and_institution'),
-                'location': v.get('location'),
-                'technical_skills_and_interests': v.get('technical_skills_and_interests') or [],
-                'goals': v.get('goals') or [],
-                'non_technical_hobbies_and_interest': v.get('non_technical_hobbies_and_interest') or [],
-                'other': v.get('other') or []
+        for person in people:
+            # Get all interests for this person, organized by type
+            person_interests = db.query(PersonInterest, Interest, InterestType).join(
+                Interest, PersonInterest.interest_id == Interest.id
+            ).join(
+                InterestType, PersonInterest.interesttype_id == InterestType.id
+            ).filter(
+                PersonInterest.person_id == person.id
+            ).all()
+            
+            # Organize interests by type
+            technical_skills = []
+            goals = []
+            hobbies = []
+            other = []
+            
+            for person_interest, interest, interest_type in person_interests:
+                interest_name = interest.description
+                type_name = interest_type.name.lower()
+                
+                if 'technical' in type_name:
+                    technical_skills.append(interest_name)
+                elif 'goal' in type_name:
+                    goals.append(interest_name)
+                elif 'hobby' in type_name or 'non_technical' in type_name:
+                    hobbies.append(interest_name)
+                else:
+                    other.append(interest_name)
+            
+            # Create profile model
+            profile_data = {
+                'name': person.name or "Unknown",
+                'role_and_institution': person.role_and_institution,
+                'location': person.location,
+                'technical_skills_and_interests': technical_skills,
+                'goals': goals,
+                'non_technical_hobbies_and_interest': hobbies,
+                'other': other
             }
-            profiles.append(ProfileModel(**payload))
-
-        # Apply limit
-        if limit < len(profiles):
-            profiles = profiles[:limit]
+            
+            profiles.append(ProfileModel(**profile_data))
 
         return ProfileResponse(data=profiles)
         
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Profiles file not found")
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Invalid JSON in profiles file")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error loading profiles: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error loading profiles from database: {str(e)}")
 
 
 @app.get("/person/{person}/interests", response_model=PersonInterestsResponse)
