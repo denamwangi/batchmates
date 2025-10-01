@@ -97,13 +97,14 @@ def save_intro_json(name, structured_intro):
     except Exception as e:
         print(f"❌ Error saving introduction for {name}: {e}")
 
-def process_with_llm(data, prompt):
+def process_with_llm(data, prompt, model: str = MODEL):
     """
     Process data using OpenAI's language model with error handling.
     
     Args:
         data: The input data to be processed (can be text, list, or other format)
         prompt: The system prompt/instructions for the LLM
+        model (str): Optional model name to use. Defaults to global MODEL.
         
     Returns:
         str: The LLM's response as a string (typically JSON format)
@@ -113,7 +114,7 @@ def process_with_llm(data, prompt):
     """
     try:
         response = openai_client.chat.completions.create(
-            model=MODEL,
+            model=model,
             messages=[{
                 "role": "developer",
                 "content": f" {prompt}"
@@ -222,7 +223,6 @@ def get_llm_condensed_output():
 
         print(f"  Normalizing {len(raw_interests)} interests...")
         response = process_with_llm(raw_interests, condense_list_prompt)
-        
         try:
             response_json = json.loads(response)
             with open(INTEREST_MAPPINGS_FILE, 'w') as f:

@@ -224,46 +224,11 @@ def initialize_db():
         normalized_interests = data['standardized_tags']
         normalized_interests_mappings = data['mappings']
 
-    
-    # Example normalization call removed; normalization happens during add_* flows.
-
-#
-
     add_interest_types()
     add_people(intros)
     add_normalized_interests(normalized_interests)
     add_interests(intros, normalized_interests_mappings)
     add_person_interests(intros, normalized_interests_mappings)
-
-    # person = Person(
-    #         id="dena", 
-    #         name="Dena Metili Mwangi", 
-    #         location="Brooklyn", 
-    #         role_and_institution='Previous EM'
-    #     )
-    # tech_interest = InterestType(name='technical_skills_and_interests')
-    # goal = InterestType(name='goal')
-    # llm = Interest(description="LLM")
-    # openxr = Interest(description="OpenXR")
-
-    # session.add_all([person, tech_interest, goal, llm, openxr])
-    # session.flush()
-
-    # pi_1 = PersonInterest(
-    #     person_id=person.id,
-    #     interest_id=llm.id,
-    #     interesttype_id=tech_interest.id
-    # )
-    # pi_2 = PersonInterest(
-    #     person_id=person.id,
-    #     interest_id=openxr.id,
-    #     interesttype_id=tech_interest.id
-    # )
-    # session.add(pi_1, pi_2)
-
-    # session.commit()
-    # for person in session.query(Person):
-    #     print(f" { person.id} and {person.name} and {person.interests}")
 
 if __name__ == "__main__":
     initialize_db()
