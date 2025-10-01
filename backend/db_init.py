@@ -1,3 +1,14 @@
+"""
+Database initialization and seeding utilities.
+
+This module provides helper functions to:
+- Create all SQLAlchemy tables
+- Seed reference data (interest types and normalized interests)
+- Ingest people and their interests from JSON inputs
+
+Use directly via `python backend/db_init.py` or import `initialize_db` from
+application code to programmatically set up the database.
+"""
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 import json 
@@ -12,6 +23,11 @@ SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 
 def create_tables():
+    """Create all database tables if they do not already exist.
+
+    Uses SQLAlchemy metadata from `Base` to create tables on the configured
+    engine. Safe to call multiple times.
+    """
     if "interests" not in inspector.get_table_names():
         Base.metadata.create_all(engine)
     else:
@@ -19,6 +35,10 @@ def create_tables():
 
 interest_types = [ 'technical_skills_and_interests', 'non_technical_hobbies_and_interest']
 def add_interest_types():
+    """Ensure baseline `InterestType` rows exist.
+
+    Inserts the predefined interest types if they are not present.
+    """
     interest_types_to_db = []
     with SessionLocal() as session:
         for interest_type in interest_types:
@@ -31,6 +51,11 @@ def add_interest_types():
             session.commit()
 
 def add_normalized_interests(normalized_interests):
+    """Insert normalized interests if missing.
+
+    Args:
+        normalized_interests: Iterable of canonical normalized interest names.
+    """
     normalized_interests_to_db = []
     with SessionLocal() as session:
         for normalized_interest in normalized_interests:
@@ -45,6 +70,16 @@ def add_normalized_interests(normalized_interests):
             session.commit()
 
 def get_normalized_interest(interest, normalized_interests_mappings, session):
+    """Get or create the `NormalizedInterest` for a raw interest string.
+
+    Args:
+        interest: Raw interest description from input data.
+        normalized_interests_mappings: Mapping from raw interest to normalized name.
+        session: Active SQLAlchemy session.
+
+    Returns:
+        NormalizedInterest: The database row representing the normalized value.
+    """
     print('finding normalized interest for ', interest)
     normalized_interest = normalized_interests_mappings.get(interest, 'misc')
     print('normalized interest is: ', normalized_interest)
@@ -58,6 +93,12 @@ def get_normalized_interest(interest, normalized_interests_mappings, session):
     return normalized_interest_in_db
 
 def add_interests(intros, normalized_interests_mappings):
+    """Insert unique `Interest` rows derived from input profiles.
+
+    Args:
+        intros: Mapping of person name to profile dict.
+        normalized_interests_mappings: Mapping from raw interest to normalized name.
+    """
     all_tech_interests = set()
     for name, intro in intros.items():
         technical_skills_and_interests = intro['technical_skills_and_interests']
@@ -83,6 +124,11 @@ def add_interests(intros, normalized_interests_mappings):
             print(f" {tech_interest.description}")
 
 def add_people(intros):
+    """Insert `Person` rows from input profiles if missing.
+
+    Args:
+        intros: Mapping of person name to profile dict.
+    """
     people_to_db = []
     with SessionLocal() as session:
         for name, intro in intros.items():
@@ -103,6 +149,14 @@ def add_people(intros):
 
 
 def add_person_interests(intros, normalized_interests_mappings):
+    """Create `PersonInterest` rows linking people to interests by type.
+
+    Ensures the related `Interest` and `InterestType` rows exist as needed.
+
+    Args:
+        intros: Mapping of person name to profile dict.
+        normalized_interests_mappings: Mapping from raw interest to normalized name.
+    """
     with SessionLocal() as session:
         for name, intro in intros.items():
             person_name = intro.get('name', name)
@@ -155,6 +209,12 @@ def add_person_interests(intros, normalized_interests_mappings):
 
 
 def initialize_db():
+    """Create tables and ingest data from local JSON files.
+
+    Reads `zulip_intros_json.json` and `interest_mappings.json` from the
+    current working directory, then seeds interest types, normalized interests,
+    people, interests, and person-interest relationships.
+    """
     create_tables()
 
     with open('zulip_intros_json.json', 'r') as f:
